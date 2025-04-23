@@ -392,6 +392,7 @@ int main() {
         getchar();
         FILE* arq=fopen("a","rb");
         FILE* arq2=fopen("a","wb");
+        printf("oi\n");
         int pasta;
         if (arq==NULL){
             printf("arquivo bugado\n");
