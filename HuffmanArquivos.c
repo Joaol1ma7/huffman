@@ -286,7 +286,7 @@ void readHeader(FILE* file, int* trash, int* treeSize) {
 }
 
 //NECESSÁRIO ESTUDAR
-void descompactador(node* arv, FILE* doc) {
+void descompactador(node* arv, FILE* doc, int trash) {
     FILE* output = fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\descompactado.txt", "wb");
     if (!output) {
         perror("Erro ao criar arquivo de saída");
@@ -295,20 +295,38 @@ void descompactador(node* arv, FILE* doc) {
 
     node* current = arv;
     unsigned char byte;
-    int bit_pos = 7; // Começa do bit mais significativo
+    int bit_pos = 7; // Começa do bit mais significativo (7)
+    long file_size;
+    long bytes_read = 0;
+
+    // Obter o tamanho total do arquivo
+    fseek(doc, 0, SEEK_END);
+    file_size = ftell(doc);
+    fseek(doc, 0, SEEK_SET);
+
+    // Pular o cabeçalho (2 bytes) e a árvore (tam bytes)
+    fseek(doc, 2, SEEK_SET); // Já lemos o header antes de chamar esta função
+    // O restante da árvore já foi lido antes também
+
+    // Posicionar no início dos dados compactados
+    fseek(doc, 2 + tamanhoArvore(arv), SEEK_SET);
 
     while (fread(&byte, 1, 1, doc) == 1) {
+        bytes_read++;
+        int is_last_byte = (bytes_read == file_size - 2 - tamanhoArvore(arv));
+
         while (bit_pos >= 0) {
+            // Se for o último byte e estivermos nos bits de lixo, pare
+            if (is_last_byte && (7 - bit_pos) >= (8 - trash)) {
+                break;
+            }
+
             // Pega o bit atual (0 ou 1)
             int bit = (byte >> bit_pos) & 1;
             bit_pos--;
 
             // Percorre a árvore
-            if (bit == 0) {
-                current = current->left;
-            } else {
-                current = current->right;
-            }
+            current = (bit == 0) ? current->left : current->right;
 
             // Se chegou a uma folha
             if (current->left == NULL && current->right == NULL) {
@@ -329,16 +347,16 @@ int main() {
     scanf("%d",&num);
     if(num==1){
         getchar();
-        FILE* arq=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textoteste.txt","rb");
-        FILE* arq2=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textocompactado.huff","wb");
-        int pasta;
+        FILE* arq=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\textograndao.txt","rb");
         if (arq==NULL){
             printf("arquivo bugado\n");
             return 0;
         }
+        FILE* arq2=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textocompactado.huff","wb");
         node* head = NULL;
-        while((pasta=fgetc(arq))!=EOF){
-            insert(pasta, &head);
+        int caractere;
+        while((caractere=fgetc(arq))!=EOF){
+            insert(caractere, &head);
         }
         huffy(&head);
         printHuffmanCodesToFile(head,arq,arq2);
@@ -350,13 +368,10 @@ int main() {
         for (int x=0;x<tam;x++){
             arvore[x]=fgetc(arq3);
         }
-        //printf("tamanho da arvore:%d\n",tam);
+        printf("tamanho do lixo:%d",lixo);
         int pos=0;
         node* arvoral=leArvore(arvore,&pos);
-        //printArv(arvoral);
-        descompactador(arvoral,arq3);
+        descompactador(arvoral,arq3,lixo);
     }
-
-    
     return 0;
 }
