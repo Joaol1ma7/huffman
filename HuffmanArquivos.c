@@ -155,68 +155,6 @@ int findPath(node* root, unsigned char letra, char* path, int depth) {
     return 0;
 }
 
-char* decimalParaBinario(int decimal) {
-    // Caso especial para 0
-    if (decimal == 0) {
-        char* binario = (char*)malloc(2 * sizeof(char));
-        binario[0] = '0';
-        binario[1] = '\0';
-        return binario;
-    }
-    
-    // Calcula o número de bits necessários
-    int temp = decimal;
-    int numBits = 0;
-    while (temp > 0) {
-        temp /= 2;
-        numBits++;
-    }
-    
-    // Aloca memória para a string binária (+1 para o caractere nulo)
-    char* binario = (char*)malloc((numBits + 1) * sizeof(char));
-    binario[numBits] = '\0'; // Terminador nulo
-    
-    // Preenche a string com os bits
-    for (int i = numBits - 1; i >= 0; i--) {
-        binario[i] = (decimal % 2) + '0'; // Converte resto para caractere '0' ou '1'
-        decimal /= 2;
-    }
-    
-    return binario;
-}
-
-char* decimalParaBinarioFormatado(int decimal) {
-    // Obtém a representação binária original
-    char* binario = decimalParaBinario(decimal);
-    int tamanho = strlen(binario);
-    
-    // Aloca espaço para 13 dígitos + espaço + terminador nulo (15 no total)
-    char* binarioFormatado = (char*)malloc(15 * sizeof(char));
-    binarioFormatado[14] = '\0';
-    
-    // Preenche com zeros à esquerda primeiro
-    int zeros = 13 - tamanho;
-    for (int i = 0; i < zeros; i++) {
-        binarioFormatado[i] = '0';
-    }
-    
-    // Copia o binário original após os zeros
-    strcpy(binarioFormatado + zeros, binario);
-    
-    // Libera a memória do binário original
-    free(binario);
-    
-    // Agora vamos inserir o espaço após o 5º bit
-    // Movemos os caracteres 5..12 para 6..13
-    for (int i = 13; i > 5; i--) {
-        binarioFormatado[i] = binarioFormatado[i-1];
-    }
-    
-    // Insere o espaço na posição 5
-    binarioFormatado[5] = ' ';
-    
-    return binarioFormatado;
-}
 
 int tamanhoArvore(node* arvore) {
     if(arvore == NULL) {
@@ -226,7 +164,7 @@ int tamanhoArvore(node* arvore) {
 }
 
 
-
+//NECESSÁRIO ESTUDAR
 void printHuffmanCodesToFile(node* head, FILE* entrada, FILE* saida) {
     // 1. Primeiro processamos todo o arquivo para descobrir o lixo
     rewind(entrada);
@@ -298,7 +236,7 @@ int is_bit_i_set(unsigned char c, int i)
  return mask & c;
 }
 
-
+//NECESSÁRIO ESTUDAR
 node* leArvore(const char* str, int* pos) {
     if (str[*pos] == '\0') {
         return NULL;
@@ -325,6 +263,7 @@ node* leArvore(const char* str, int* pos) {
     return novo;
 }
 
+//NECESSÁRIO ESTUDAR
 void readHeader(FILE* file, int* trash, int* treeSize) {
     if (!file || !trash || !treeSize) {
         return;
@@ -346,7 +285,7 @@ void readHeader(FILE* file, int* trash, int* treeSize) {
     *treeSize = header & 0x1FFF;      // 0x1FFF = mascara para 13 bits (0001111111111111)
 }
 
-
+//NECESSÁRIO ESTUDAR
 void descompactador(node* arv, FILE* doc) {
     FILE* output = fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\descompactado.txt", "wb");
     if (!output) {
@@ -390,9 +329,8 @@ int main() {
     scanf("%d",&num);
     if(num==1){
         getchar();
-        FILE* arq=fopen("a","rb");
-        FILE* arq2=fopen("a","wb");
-        printf("oi\n");
+        FILE* arq=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textoteste.txt","rb");
+        FILE* arq2=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textocompactado.huff","wb");
         int pasta;
         if (arq==NULL){
             printf("arquivo bugado\n");
@@ -405,15 +343,17 @@ int main() {
         huffy(&head);
         printHuffmanCodesToFile(head,arq,arq2);
     }else if(num==2){
-        FILE* arq3=fopen("a","r+b");
+        FILE* arq3=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textocompactado.huff","rb");
         int lixo,tam=0;
         readHeader(arq3,&lixo,&tam);
         char arvore[tam];
-        for (int x=0;x<47;x++){
+        for (int x=0;x<tam;x++){
             arvore[x]=fgetc(arq3);
         }
+        //printf("tamanho da arvore:%d\n",tam);
         int pos=0;
         node* arvoral=leArvore(arvore,&pos);
+        //printArv(arvoral);
         descompactador(arvoral,arq3);
     }
 
