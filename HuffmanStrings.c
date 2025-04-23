@@ -100,6 +100,7 @@ void huffy(node** head) {
     if ((*head)->next == NULL) {
         return;
     }
+    selectionSort(head);
     node* current = *head;
     node* prox = current->next;
     node* new_node = malloc(sizeof(node));
@@ -110,7 +111,6 @@ void huffy(node** head) {
     *head = prox->next;
     new_node->next = *head;
     *head = new_node;
-    selectionSort(head);
     huffy(head);
 }
 
@@ -310,6 +310,7 @@ int main() {
         for (size_t i = 0; i < strlen(frase); i++) {
             insert(frase[i], &head);
         }
+        printLista(head);
         huffy(&head);
         printf("\n");
         int lixo=printHuffmanCodes(head, frase);

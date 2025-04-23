@@ -66,7 +66,6 @@ void selectionSort(node** head) {
 }
 
 void printLista(node* head) {
-    
     while (head != NULL) {
         if (head->next == NULL) {
             printf("[%c][%ld]", head->letra, head->freq);
@@ -76,24 +75,6 @@ void printLista(node* head) {
         head = head->next;
     }
     printf("\n");
-    return;
-}
-
-void remover(node** head, node* no) {
-    if (*head == no) {
-        *head = (*head)->next;
-    }
-
-    node* current = *head;
-    node* prox = current->next;
-
-    while (prox != NULL && prox != no) {
-        current = prox;
-        prox = prox->next;
-    }
-    if (prox == no) {
-        current->next = prox->next;
-    }
     return;
 }
 
@@ -119,21 +100,49 @@ void printArv(node* head) {
     if (!head) {
         return;
     }
-    printf("%c", head->letra);
+    if(head->letra=='*' && head->left==NULL && head->right==NULL){
+        printf("///%c",head->letra);
+    }else{
+        printf("%c", head->letra);
+    }
     printArv(head->left);
     printArv(head->right);
     return;
 }
 
-void printArvDoc(node* head,FILE* doc) {
+int buscaAsteriscoFolha(node* root) {
+    if (root == NULL) {
+        return 0;
+    }
+    
+    if (root->left == NULL && root->right == NULL && root->letra == '*') {
+        return 3;
+    }
+    
+    return buscaAsteriscoFolha(root->left) == 3 ? 3 : 
+           buscaAsteriscoFolha(root->right) == 3 ? 3 : 0;
+}
+
+void printArvDoc(node* head, FILE* doc) {
     if (!head) {
         return;
     }
-
-    fputc(head->letra,doc);
-    printArvDoc(head->left,doc);
-    printArvDoc(head->right,doc);
-    return;
+    
+    // Verifica se é um nó folha com '*'
+    if (head->letra == '*' && head->left == NULL && head->right == NULL) {
+        fputc('@', doc);
+        fputc('+', doc);
+        fputc('/', doc);
+        fputc(head->letra, doc);
+    } else {
+        fputc(head->letra, doc);
+        
+        // Se for um nó interno, processa os filhos
+        if (head->left != NULL || head->right != NULL) {
+            printArvDoc(head->left, doc);
+            printArvDoc(head->right, doc);
+        }
+    }
 }
 
 int findPath(node* root, unsigned char letra, char* path, int depth) {
@@ -160,6 +169,12 @@ int tamanhoArvore(node* arvore) {
     if(arvore == NULL) {
         return 0;
     }
+    
+    // Se for um nó folha com '*', conta como 4 caracteres (@+/*)
+    if(arvore->letra == '*' && arvore->left == NULL && arvore->right == NULL) {
+        return 4;
+    }
+    
     return 1 + tamanhoArvore(arvore->left) + tamanhoArvore(arvore->right);
 }
 
@@ -185,7 +200,7 @@ void printHuffmanCodesToFile(node* head, FILE* entrada, FILE* saida) {
     // 2. Escreve o cabeçalho
     // 3 bits de lixo + 13 bits do tamanho da árvore
     int tamanho_arv = tamanhoArvore(head);
-    
+    //printf("\nTamanho do lixo: %d Tamanho da arvore:%d\n",lixo,tamanho_arv);
     // Junta lixo e tamanho em 2 bytes (16 bits)
     unsigned short header = 0;
     header |= (lixo & 0x07) << 13;    // 3 bits de lixo nos 3 mais significativos
@@ -242,20 +257,36 @@ node* leArvore(const char* str, int* pos) {
         return NULL;
     }
 
-    // Cria novo nó
+    // Verifica se é um nó folha especial (@+/*)
+    if (str[*pos] == '@' && str[*pos+1] == '+' && str[*pos+2] == '/' && str[*pos+3] == '*') {
+        node* novo = malloc(sizeof(node));
+        if (!novo) return NULL;
+        
+        novo->letra = '*';
+        novo->freq = 0;
+        novo->left = NULL;
+        novo->right = NULL;
+        novo->next = NULL;
+        *pos += 4;  // Avança 4 posições
+        return novo;
+    }
+
+    // Cria um nó normal
     node* novo = malloc(sizeof(node));
+    if (!novo) return NULL;
+    
     novo->letra = str[*pos];
     novo->freq = 0;
     novo->next = NULL;
-    
-    (*pos)++;  // Avança para o próximo caractere
+    (*pos)++;
 
+    // Se for um '*' normal (nó interno) ou qualquer outro caractere
     if (novo->letra == '*') {
         // Nó interno - tem filhos
         novo->left = leArvore(str, pos);
         novo->right = leArvore(str, pos);
     } else {
-        // Folha - não tem filhos
+        // Folha normal - não tem filhos
         novo->left = NULL;
         novo->right = NULL;
     }
@@ -286,8 +317,8 @@ void readHeader(FILE* file, int* trash, int* treeSize) {
 }
 
 //NECESSÁRIO ESTUDAR
-void descompactador(node* arv, FILE* doc, int trash) {
-    FILE* output = fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\descompactado.txt", "wb");
+void descompactador(node* arv, FILE* doc, int trash, int treeSize) {  // Adicione treeSize como parâmetro
+    FILE* output = fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\descompactado.png", "wb");
     if (!output) {
         perror("Erro ao criar arquivo de saída");
         return;
@@ -304,16 +335,12 @@ void descompactador(node* arv, FILE* doc, int trash) {
     file_size = ftell(doc);
     fseek(doc, 0, SEEK_SET);
 
-    // Pular o cabeçalho (2 bytes) e a árvore (tam bytes)
-    fseek(doc, 2, SEEK_SET); // Já lemos o header antes de chamar esta função
-    // O restante da árvore já foi lido antes também
-
-    // Posicionar no início dos dados compactados
-    fseek(doc, 2 + tamanhoArvore(arv), SEEK_SET);
+    // Posicionar no início dos dados compactados (2 bytes do header + tamanho da árvore)
+    fseek(doc, 2 + treeSize, SEEK_SET);  // CORREÇÃO PRINCIPAL: usar treeSize em vez de tamanhoArvore(arv)
 
     while (fread(&byte, 1, 1, doc) == 1) {
         bytes_read++;
-        int is_last_byte = (bytes_read == file_size - 2 - tamanhoArvore(arv));
+        int is_last_byte = (bytes_read == file_size - 2 - treeSize);  // Atualizado para usar treeSize
 
         while (bit_pos >= 0) {
             // Se for o último byte e estivermos nos bits de lixo, pare
@@ -347,7 +374,7 @@ int main() {
     scanf("%d",&num);
     if(num==1){
         getchar();
-        FILE* arq=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\textograndao.txt","rb");
+        FILE* arq=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\RobloxScreenShot20241018_161517886.png","rb");
         if (arq==NULL){
             printf("arquivo bugado\n");
             return 0;
@@ -357,21 +384,28 @@ int main() {
         int caractere;
         while((caractere=fgetc(arq))!=EOF){
             insert(caractere, &head);
+            //printf("Adicionou %c a lista\n",caractere);
         }
+        selectionSort(&head);
+        //printLista(head);
         huffy(&head);
+        //printArv(head);
         printHuffmanCodesToFile(head,arq,arq2);
     }else if(num==2){
         FILE* arq3=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textocompactado.huff","rb");
         int lixo,tam=0;
         readHeader(arq3,&lixo,&tam);
+        //printf("tamanho:%d",tam);
         char arvore[tam];
         for (int x=0;x<tam;x++){
             arvore[x]=fgetc(arq3);
         }
-        printf("tamanho do lixo:%d",lixo);
+        //printf("char da arvore: %s\n",arvore);
+        //printf("tamanho do lixo:%d\n",lixo);
         int pos=0;
         node* arvoral=leArvore(arvore,&pos);
-        descompactador(arvoral,arq3,lixo);
+        //printArv(arvoral);
+        descompactador(arvoral,arq3,lixo,tam);
     }
     return 0;
 }
