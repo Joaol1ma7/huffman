@@ -100,9 +100,9 @@ void printArv(node* head) {
     if (!head) {
         return;
     }
-    if(head->letra=='*' && head->left==NULL && head->right==NULL){
-        printf("///%c",head->letra);
-    }else{
+    if(head->letra == '*' && head->left == NULL && head->right == NULL){
+        printf("\\%c", head->letra);  // Mostra o escape também na impressão
+    } else {
         printf("%c", head->letra);
     }
     printArv(head->left);
@@ -130,11 +130,12 @@ void printArvDoc(node* head, FILE* doc) {
     
     // Verifica se é um nó folha com '*'
     if (head->letra == '*' && head->left == NULL && head->right == NULL) {
-        fputc('@', doc);
-        fputc('+', doc);
-        fputc('/', doc);
+        fputc('\\', doc);  // Usa apenas o caractere de escape
         fputc(head->letra, doc);
-    } else {
+    } else if (head->letra == '\\') {  // Se for uma barra invertida normal
+        fputc('\\', doc);       // Escapa ela também
+        fputc('\\', doc);
+    }else{
         fputc(head->letra, doc);
         
         // Se for um nó interno, processa os filhos
@@ -170,9 +171,9 @@ int tamanhoArvore(node* arvore) {
         return 0;
     }
     
-    // Se for um nó folha com '*', conta como 4 caracteres (@+/*)
+    // Se for um nó folha com '*', conta como 2 caracteres (\*)
     if(arvore->letra == '*' && arvore->left == NULL && arvore->right == NULL) {
-        return 4;
+        return 3;
     }
     
     return 1 + tamanhoArvore(arvore->left) + tamanhoArvore(arvore->right);
@@ -196,10 +197,11 @@ void printHuffmanCodesToFile(node* head, FILE* entrada, FILE* saida) {
     
     // Calcula o lixo (bits que faltam para completar o último byte)
     int lixo = (8-(total_bits % 8))%8;
-    
+    //printf("\ntamanho do lixo:%d\n",lixo);
     // 2. Escreve o cabeçalho
     // 3 bits de lixo + 13 bits do tamanho da árvore
     int tamanho_arv = tamanhoArvore(head);
+    //printf("tamanho da arvore:%d\n",tamanho_arv);
     //printf("\nTamanho do lixo: %d Tamanho da arvore:%d\n",lixo,tamanho_arv);
     // Junta lixo e tamanho em 2 bytes (16 bits)
     unsigned short header = 0;
@@ -257,18 +259,36 @@ node* leArvore(const char* str, int* pos) {
         return NULL;
     }
 
-    // Verifica se é um nó folha especial (@+/*)
-    if (str[*pos] == '@' && str[*pos+1] == '+' && str[*pos+2] == '/' && str[*pos+3] == '*') {
-        node* novo = malloc(sizeof(node));
-        if (!novo) return NULL;
+    // Verifica se é uma barra invertida de escape
+    if (str[*pos] == '\\') {
+        (*pos)++; // Avança para o próximo caractere
         
-        novo->letra = '*';
-        novo->freq = 0;
-        novo->left = NULL;
-        novo->right = NULL;
-        novo->next = NULL;
-        *pos += 4;  // Avança 4 posições
-        return novo;
+        // Trata \* (folha especial)
+        if (str[*pos] == '*') {
+            node* novo = malloc(sizeof(node));
+            if (!novo) return NULL;
+            
+            novo->letra = '*';
+            novo->freq = 0;
+            novo->left = NULL;
+            novo->right = NULL;
+            novo->next = NULL;
+            (*pos)++; // Avança após o *
+            return novo;
+        }
+        // Trata \\ (barra invertida literal)
+        else if (str[*pos] == '\\') {
+            node* novo = malloc(sizeof(node));
+            if (!novo) return NULL;
+            
+            novo->letra = '\\';
+            novo->freq = 0;
+            novo->left = NULL;
+            novo->right = NULL;
+            novo->next = NULL;
+            (*pos)++; // Avança após a segunda barra
+            return novo;
+        }
     }
 
     // Cria um nó normal
@@ -280,7 +300,7 @@ node* leArvore(const char* str, int* pos) {
     novo->next = NULL;
     (*pos)++;
 
-    // Se for um '*' normal (nó interno) ou qualquer outro caractere
+    // Se for um '*' e não foi escapado, é nó interno
     if (novo->letra == '*') {
         // Nó interno - tem filhos
         novo->left = leArvore(str, pos);
@@ -318,7 +338,7 @@ void readHeader(FILE* file, int* trash, int* treeSize) {
 
 //NECESSÁRIO ESTUDAR
 void descompactador(node* arv, FILE* doc, int trash, int treeSize) {  // Adicione treeSize como parâmetro
-    FILE* output = fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\descompactado.png", "wb");
+    FILE* output = fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\descompactado.txt", "wb");
     if (!output) {
         perror("Erro ao criar arquivo de saída");
         return;
@@ -374,7 +394,7 @@ int main() {
     scanf("%d",&num);
     if(num==1){
         getchar();
-        FILE* arq=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\RobloxScreenShot20241018_161517886.png","rb");
+        FILE* arq=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\estrela.txt","rb");
         if (arq==NULL){
             printf("arquivo bugado\n");
             return 0;
@@ -384,10 +404,8 @@ int main() {
         int caractere;
         while((caractere=fgetc(arq))!=EOF){
             insert(caractere, &head);
-            //printf("Adicionou %c a lista\n",caractere);
         }
         selectionSort(&head);
-        //printLista(head);
         huffy(&head);
         //printArv(head);
         printHuffmanCodesToFile(head,arq,arq2);
@@ -395,13 +413,16 @@ int main() {
         FILE* arq3=fopen("C:\\Users\\Joao\\Desktop\\HUFFMAN\\Textocompactado.huff","rb");
         int lixo,tam=0;
         readHeader(arq3,&lixo,&tam);
-        //printf("tamanho:%d",tam);
+        //printf("tamanho:%d\n",tam);
+        //printf("tamanho do lixo:%d\n",lixo);
         char arvore[tam];
         for (int x=0;x<tam;x++){
             arvore[x]=fgetc(arq3);
+            //printf("arvore na posicao %d:%c",x,arvore[x]);
         }
+        
+        printf("\n");
         //printf("char da arvore: %s\n",arvore);
-        //printf("tamanho do lixo:%d\n",lixo);
         int pos=0;
         node* arvoral=leArvore(arvore,&pos);
         //printArv(arvoral);
