@@ -12,10 +12,33 @@ typedef struct {
     int num_literais;
 } Clausula;
 
+typedef struct BinaryTree {
+    int variavel;
+    int atribuicao;
+    struct BinaryTree* left;
+    struct BinaryTree* right;
+} BinaryTree;
+
 Clausula* clausulas[MAX_CLAUSULAS];
 int num_variaveis = 0;
 int num_clausulas = 0;
-int atribuicoes[MAX_VARIAVEIS + 1];
+int atribuicoes[MAX_VARIAVEIS + 1]; 
+
+BinaryTree* criar_no(int variavel, int atribuicao) {
+    BinaryTree* no = (BinaryTree*)malloc(sizeof(BinaryTree));
+    no->variavel = variavel;
+    no->atribuicao = atribuicao;
+    no->left = NULL;
+    no->right = NULL;
+    return no;
+}
+
+void liberar_arvore(BinaryTree* raiz) {
+    if (!raiz) return;
+    liberar_arvore(raiz->left);
+    liberar_arvore(raiz->right);
+    free(raiz);
+}
 
 bool sat_clausula(Clausula* clausula) {
     bool tem_literal_nao_atribuido = false;
@@ -54,7 +77,7 @@ bool todas_atribuicoes_feitas() {
     return true;
 }
 
-bool resolvedor_sat() {
+bool resolvedor_sat(BinaryTree* raiz) {
     if (conflito()) return false;
     if (todas_atribuicoes_feitas()) return true;
 
@@ -65,15 +88,17 @@ bool resolvedor_sat() {
             break;
         }
     }
-    
+
     if (variavel == -1) return !conflito();
-    
+
     atribuicoes[variavel] = 1;
-    if (resolvedor_sat()) return true;
-    
+    raiz->right = criar_no(variavel, 1);
+    if (resolvedor_sat(raiz->right)) return true;
+
     atribuicoes[variavel] = 0;
-    if (resolvedor_sat()) return true;
-    
+    raiz->left = criar_no(variavel, 0);
+    if (resolvedor_sat(raiz->left)) return true;
+
     atribuicoes[variavel] = -1;
     return false;
 }
@@ -81,36 +106,33 @@ bool resolvedor_sat() {
 void ler_dimacs(FILE* arquivo) {
     char linha[256];
     int clausulas_lidas = 0;
-    
+
     while (fgets(linha, sizeof(linha), arquivo)) {
         if (linha[0] == 'c') continue;
-        
+
         if (linha[0] == 'p') {
             sscanf(linha, "p cnf %d %d", &num_variaveis, &num_clausulas);
-            printf("Problema com %d variaveis e %d clausulas\n", num_variaveis, num_clausulas);
         } else {
             if (clausulas_lidas >= MAX_CLAUSULAS) {
-                fprintf(stderr, "Erro: Numero maximo de clausulas excedido!\n");
                 exit(1);
             }
-            
+
             Clausula* clausula = (Clausula*)malloc(sizeof(Clausula));
             clausula->num_literais = 0;
-            
+
             int literal;
             char* ptr = linha;
-            
+
             while (sscanf(ptr, "%d", &literal) == 1 && literal != 0) {
                 if (clausula->num_literais >= MAX_LITERAIS) {
-                    fprintf(stderr, "Erro: Numero maximo de literais excedido!\n");
                     exit(1);
                 }
-                
+
                 clausula->literais[clausula->num_literais++] = literal;
                 while (*ptr != ' ' && *ptr != '\t' && *ptr != '\0') ptr++;
                 while (*ptr == ' ' || *ptr == '\t') ptr++;
             }
-            
+
             if (clausula->num_literais > 0) {
                 clausulas[clausulas_lidas++] = clausula;
             } else {
@@ -118,10 +140,8 @@ void ler_dimacs(FILE* arquivo) {
             }
         }
     }
-    
+
     if (clausulas_lidas != num_clausulas) {
-        printf("Aviso: Numero de clausulas lidas (%d) difere do declarado (%d)\n", 
-              clausulas_lidas, num_clausulas);
         num_clausulas = clausulas_lidas;
     }
 }
@@ -145,16 +165,19 @@ int main(int argc, char* argv[]) {
     ler_dimacs(arquivo);
     fclose(arquivo);
 
-    bool resultado = resolvedor_sat();
-    
+    BinaryTree* raiz = criar_no(0, -1);
+    bool resultado = resolvedor_sat(raiz);
+
     if (resultado) {
-        printf("\n SAT\n");
+        printf("\nSAT\n");
         for (int i = 1; i <= num_variaveis; i++) {
-            printf("x%d = %s\n", i, atribuicoes[i] ? "verdadeiro" : "falso");
+            printf("x%d = %s\n", i, atribuicoes[i] ? "1" : "0");
         }
     } else {
-        printf("\n UNSAT\n");
+        printf("\nUNSAT\n");
     }
+
+    liberar_arvore(raiz);
 
     for (int i = 0; i < num_clausulas; i++) {
         free(clausulas[i]);
