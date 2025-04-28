@@ -3,15 +3,6 @@
 #include <stdlib.h>   
 #include <string.h>   
 
-// Estrutura de nó da árvore de Huffman
-typedef struct No {
-    unsigned char caractere; // Armazena o caractere (byte)
-    int frequencia;          // Frequência de ocorrência do caractere
-    struct No *esquerda;      // Filho à esquerda
-    struct No *direita;       // Filho à direita
-    struct No *proximo;       // Próximo nó na lista (usado para ordenação)
-} No;
-
 // Função que cria um novo nó com caractere e frequência
 No *criar_no(unsigned char caractere, int frequencia) {
     No *novo_no = (No *)malloc(sizeof(No)); // Aloca memória para o novo nó
