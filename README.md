@@ -1,2 +1,0 @@
-#Huffman
-Olá, meu nome é João Lima e estou realizando esse projeto para a disciplina de Estrutura de Dados da Universidade Federal de Alagoas. Este projeto consiste na implementação da árvore de huffman, um compactador de arquivos.
