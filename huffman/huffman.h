@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 typedef struct No {
-    unsigned char caractere;
+    void *caractere;
     int frequencia;
     struct No *esquerda;
     struct No *direita;

@@ -6,7 +6,12 @@
 // Função que cria um novo nó com caractere e frequência
 No *criar_no(unsigned char caractere, int frequencia) {
     No *novo_no = (No *)malloc(sizeof(No)); // Aloca memória para o novo nó
-    novo_no->caractere = caractere; // Define o caractere do nó
+    
+    // Alocação e atribuição do caractere usando void*
+    unsigned char *novo_caractere = (unsigned char *)malloc(sizeof(unsigned char));
+    *novo_caractere = caractere;
+    novo_no->caractere = novo_caractere;
+    
     novo_no->frequencia = frequencia; // Define a frequência do nó
     novo_no->esquerda = NULL; // Inicializa o filho esquerdo como NULL
     novo_no->direita = NULL; // Inicializa o filho direito como NULL
@@ -54,8 +59,10 @@ No *construir_arvore(int tabela_frequencias[256]) {
 // Função para construir a tabela de códigos binários de Huffman
 void construir_tabela(No *raiz, char *caminho, char *tabela[256]) {
     if (!raiz->esquerda && !raiz->direita) { // Caso o nó seja uma folha
-        tabela[raiz->caractere] = (char *)malloc(strlen(caminho) + 1); // Aloca espaço para o código binário
-        strcpy(tabela[raiz->caractere], caminho); // Copia o código binário para a tabela
+        // Acessa o caractere usando casting de void* para unsigned char*
+        unsigned char caractere = *((unsigned char *)raiz->caractere);
+        tabela[caractere] = (char *)malloc(strlen(caminho) + 1); // Aloca espaço para o código binário
+        strcpy(tabela[caractere], caminho); // Copia o código binário para a tabela
         return;
     }
     int tamanho = strlen(caminho); // Calcula o tamanho do código binário até agora
@@ -76,11 +83,13 @@ void construir_tabela(No *raiz, char *caminho, char *tabela[256]) {
 void escrever_arvore(No *raiz, FILE *saida, int *tamanho) {
     if (!raiz) return; // Se o nó for NULL, retorna
     if (!raiz->esquerda && !raiz->direita) { // Se for uma folha
-        if (raiz->caractere == '*' || raiz->caractere == '\\') { // Se o caractere for especial (já escapado)
+        // Acessa o caractere usando casting de void* para unsigned char*
+        unsigned char caractere = *((unsigned char *)raiz->caractere);
+        if (caractere == '*' || caractere == '\\') { // Se o caractere for especial (já escapado)
             fputc('\\', saida); // Escapa o caractere
             (*tamanho)++;
         }
-        fputc(raiz->caractere, saida); // Escreve o caractere no arquivo
+        fputc(caractere, saida); // Escreve o caractere no arquivo
         (*tamanho)++; // Incrementa o tamanho
     } else {
         fputc('*', saida); // Escreve o marcador de nó interno
@@ -214,7 +223,9 @@ void descomprimir(const char *nome_entrada, const char *nome_saida) {
                 atual = atual->direita;
 
             if (!atual->esquerda && !atual->direita) { // Se chegou a uma folha
-                fputc(atual->caractere, saida); // Escreve o caractere na saída
+                // Acessa o caractere usando casting de void* para unsigned char*
+                unsigned char caractere = *((unsigned char *)atual->caractere);
+                fputc(caractere, saida); // Escreve o caractere na saída
                 atual = raiz; // Volta para a raiz
             }
         }
@@ -230,10 +241,6 @@ void liberar_arvore(No *raiz) {
     if (!raiz) return; // Se o nó for NULL, retorna
     liberar_arvore(raiz->esquerda); // Libera a subárvore esquerda
     liberar_arvore(raiz->direita); // Libera a subárvore direita
+    free(raiz->caractere); // Libera a memória do caractere (importante!)
     free(raiz); // Libera o nó atual
 }
-
-
-//gcc -Wall -Wextra -O2 -o huffman main.c huffman.c
-
-
