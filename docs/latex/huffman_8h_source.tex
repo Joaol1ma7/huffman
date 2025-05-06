@@ -1,0 +1,26 @@
+\doxysection{huffman.\+h}
+\hypertarget{huffman_8h_source}{}\label{huffman_8h_source}\index{huffman/huffman.h@{huffman/huffman.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ HUFFMAN\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ HUFFMAN\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_no}{No}}\ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordtype}{void}\ *\mbox{\hyperlink{struct_no_ab088fce111603f912bdbf0ee2e6e96f7}{caractere}};\ \ \ \ \ \ }
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_no_ac63b1f52fef39d625481adee7d69f268}{frequencia}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_no}{No}}\ *\mbox{\hyperlink{struct_no_a72296d7737f06b220762db7298e754ed}{esquerda}};\ \ }
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_no}{No}}\ *\mbox{\hyperlink{struct_no_af29b91334e2b8cbc0e2f48145338a2fb}{direita}};\ \ \ }
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_no}{No}}\ *\mbox{\hyperlink{struct_no_a6a2c3f49db6688111edb1a265b963ab0}{proximo}};\ \ \ }
+\DoxyCodeLine{00022\ \}\ \mbox{\hyperlink{struct_no}{No}};}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keywordtype}{void}\ comprimir(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *nome\_entrada,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *nome\_saida);}
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}\ descomprimir(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *nome\_entrada,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *nome\_saida);}
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ liberar\_arvore(\mbox{\hyperlink{struct_no}{No}}\ *raiz);}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ HUFFMAN\_H}}
+
+\end{DoxyCode}
